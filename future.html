@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCARY!!!!!!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: black;
+            color: white;
+            text-align: center;
+            cursor: url('knife.png'), auto;
+            height: 100vh;
+        }
+
+        .character-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vmin;
+            /* Adjusts dynamically to fit viewport */
+            height: 90vmin;
+            background: url('character-closed.png') no-repeat center center;
+            background-size: cover;
+        }
+
+        .text-box {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .button-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            display: none;
+        }
+
+        .button-box button {
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            color: black;
+            background-color: lightgray;
+            border: 2px solid black;
+            cursor: pointer;
+            margin: 0 20px;
+        }
+    </style>
+    <script>
+        let currentTextBox;
+        let isMouthOpen = false;
+
+        function setupAudio() {
+            const audioElement = new Audio('bugbus2.mp3');
+            audioElement.loop = true;
+            audioElement.play();
+        }
+
+        function showText(text, callback) {
+            if (currentTextBox) currentTextBox.remove();
+            currentTextBox = document.createElement('div');
+            currentTextBox.className = 'text-box';
+            currentTextBox.textContent = text;
+            document.body.appendChild(currentTextBox);
+            currentTextBox.style.display = 'block';
+            if (callback) callback();
+        }
+
+        function startTextSequence() {
+            showText('Why have you come here.', () => {
+                setTimeout(() => {
+                    showText('I demand answers.', () => {
+                        setTimeout(() => {
+                            showHateButtons();
+                        }, 5000);
+                    });
+                }, 4000);
+            });
+        }
+
+        function animateCharacter() {
+            const characterBox = document.querySelector('.character-box');
+
+            setInterval(() => {
+                isMouthOpen = !isMouthOpen;
+                characterBox.style.backgroundImage = isMouthOpen
+                    ? "url('character-open.png')"
+                    : "url('character-closed.png')";
+            }, 500);
+        }
+
+        function showHateButtons() {
+            const buttonBox = document.querySelector('.button-box');
+            buttonBox.innerHTML = '<button class="hate-button">Let me outta this bitch!!!!!!!!!!</button> <button class="hate-button">cool sprite Jonah</button>';
+            buttonBox.style.display = 'block';
+
+            buttonBox.querySelectorAll('.hate-button').forEach(button => {
+                button.onclick = () => window.location.href = 'password.html';
+            });
+        }
+
+        window.onload = function () {
+            setupAudio();
+            startTextSequence();
+            animateCharacter();
+        };
+    </script>
+</head>
+
+<body>
+    <div class="character-box"></div>
+    <div class="button-box"></div>
+</body>
+
+</html>

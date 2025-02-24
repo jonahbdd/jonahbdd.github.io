@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yeah, what do you think you deserve?</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: black;
+            color: white;
+            text-align: center;
+            cursor: url('frowney.png'), auto;
+        }
+
+        .text-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .button-box {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            white-space: nowrap;
+        }
+
+        .button-box button {
+            padding: 8px 16px;
+            font-size: 1.2rem;
+            font-family: 'Courier New', Courier, monospace;
+            color: black;
+            background-color: lightgray;
+            border: 2px solid black;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+    </style>
+    <script>
+        let currentTextBox;
+
+        function setupAudio() {
+            const audioElement = new Audio('lit.mp3');
+            audioElement.loop = true;
+            audioElement.play();
+        }
+
+        function showText(text, callback) {
+            if (currentTextBox) currentTextBox.remove();
+            currentTextBox = document.createElement('div');
+            currentTextBox.className = 'text-box';
+            currentTextBox.textContent = text;
+            document.body.appendChild(currentTextBox);
+            currentTextBox.style.display = 'block';
+            if (callback) callback();
+        }
+
+        function showInitialText() {
+            setTimeout(() => {
+                showText('What do you think you deserve for this momentous occasion?', showChoices);
+            }, 3000);
+        }
+
+        function showChoices() {
+            const buttonBox = document.createElement('div');
+            buttonBox.className = 'button-box';
+            buttonBox.innerHTML = '<button id="past-button">The past</button> <button id="future-button">The future</button>';
+            document.body.appendChild(buttonBox);
+            buttonBox.style.display = 'block';
+
+            document.getElementById('past-button').onclick = () => window.location.href = 'index.html';
+            document.getElementById('future-button').onclick = () => window.location.href = 'future.html';
+        }
+
+        window.onload = function () {
+            document.body.style.background = 'black';
+            setupAudio();
+            showInitialText();
+        };
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
