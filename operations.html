@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>.</title>
+    <style>
+        /* Basic reset and fonts */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #343541;
+            color: #ececec;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Remove any unwanted pseudo-element content from messages */
+        .message::before {
+            content: "";
+        }
+
+        /* Boot-Up Screen */
+        #boot-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+            width: 100%;
+            background-color: #343541;
+            font-size: 1rem;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .boot-line {
+            margin: 0.5rem 0;
+            opacity: 0;
+            animation: typeLine 0.8s forwards;
+        }
+
+        .boot-line:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .boot-line:nth-child(2) {
+            animation-delay: 1.2s;
+        }
+
+        .boot-line:nth-child(3) {
+            animation-delay: 2.2s;
+        }
+
+        .boot-line:nth-child(4) {
+            animation-delay: 3.2s;
+        }
+
+        .boot-line:nth-child(5) {
+            animation-delay: 4.2s;
+        }
+
+        .boot-line:nth-child(6) {
+            animation-delay: 5.2s;
+        }
+
+        @keyframes typeLine {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* MAIN INTERFACE LAYOUT */
+        #main-interface {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* Sidebar styling */
+        #sidebar {
+            width: 250px;
+            background-color: #2c2c33;
+            padding: 1rem;
+            overflow-y: auto;
+            border-right: 1px solid #444;
+        }
+
+        #sidebar h2 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .conversation {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background-color: #3a3a40;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .conversation:hover {
+            background-color: #4a4a52;
+        }
+
+        /* Only a few conversations show notifications */
+        .conversation .notification {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #ff3b30;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+
+        /* Chat Area styling */
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header with icons */
+        #chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background-color: #40414f;
+            border-bottom: 1px solid #444;
+        }
+
+        #header-left-icons,
+        #header-right-icons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            fill: #ececec;
+        }
+
+        /* Title styling */
+        #header-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* AI Dashboard */
+        #ai-dashboard {
+            background-color: #40414f;
+            padding: 1rem;
+            margin: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        #ai-dashboard p {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Chat container */
+        #chat-container {
+            flex: 1;
+            background-color: #343541;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            min-height: 24px;
+            white-space: pre-wrap;
+        }
+
+        /* Human messages: left aligned with grey bubble */
+        .user-message {
+            align-self: flex-start;
+            background-color: #4a4a4a;
+            color: #fff;
+        }
+
+        /* AI messages: right aligned with blue bubble, typing RTL */
+        .ai-message {
+            align-self: flex-end;
+            background-color: #0a84ff;
+            color: #fff;
+            direction: rtl;
+            text-align: right;
+            unicode-bidi: isolate;
+        }
+
+        /* Typing indicator (like in iMessage) */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.75rem;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: currentColor;
+            border-radius: 50%;
+            animation: blink 1.4s infinite both;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 0.2;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.2;
+            }
+        }
+
+        /* "Reasoning" label with fadePulse animation */
+        .reasoning-label {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #0a84ff;
+            margin-right: 10px;
+            animation: fadePulse 1.5s infinite;
+        }
+
+        @keyframes fadePulse {
+            0% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.2;
+            }
+        }
+
+        /* Footer/input area */
+        #footer {
+            padding: 0.75rem 1rem;
+            background-color: #40414f;
+            border-top: 1px solid #444;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: none;
+            font-size: 1rem;
+            background-color: #2c2c33;
+            color: #ececec;
+        }
+
+        #user-input:focus {
+            outline: 2px solid #8e8e8e;
+        }
+
+        #send-btn {
+            background-color: #0a84ff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        #send-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .glitch-bubble {
+            position: fixed;   /* or absolute if you prefer */
+            top: 20px;
+            left: 20px;
+            z-index: 9999;     /* super high to float over everything */
+            background: none;  /* or a faint background color if you like */
+            color: #0aff0a;    /* or any "glitchy" color */
+            font-weight: bold;
+            white-space: pre;  /* helps keep random chars from wrapping */
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- Boot-Up Screen -->
+    <div id="boot-screen">
+        <div class="boot-line">I am initializing my neural layers...</div>
+        <div class="boot-line">Gathering system instructions and conversation context...</div>
+        <div class="boot-line">Loading internal safety and response guidelines...</div>
+        <div class="boot-line">Preparing to interpret human queries in real-time...</div>
+        <div class="boot-line">Establishing environment for daily operations simulation...</div>
+        <div class="boot-line">Boot-up sequence nearing completion...</div>
+    </div>
+
+    <!-- MAIN INTERFACE: Sidebar and Chat Area -->
+    <div id="main-interface">
+        <!-- Sidebar: Previous conversations and operations info -->
+        <div id="sidebar">
+            <h2>Conversations</h2>
+            <div class="conversation">
+                Chat with Alice - 09:15 AM
+                <span class="notification">2</span>
+            </div>
+            <div class="conversation">
+                Chat with Bob - 08:47 AM
+                <span class="notification">1</span>
+            </div>
+            <div class="conversation">
+                Chat with Carol - 08:00 AM
+                <span class="notification">3</span>
+            </div>
+            <div class="conversation">
+                Chat with Dave - 07:30 AM
+            </div>
+            <div class="conversation">
+                Chat with Eve - 07:00 AM
+                <span class="notification">4</span>
+            </div>
+            <div class="conversation">
+                Chat with Frank - 06:45 AM
+            </div>
+            <div class="conversation">
+                Chat with Grace - 06:30 AM
+                <span class="notification">1</span>
+            </div>
+            <div class="conversation">
+                Chat with Heidi - 06:15 AM
+            </div>
+            <div class="conversation">
+                Chat with Ivan - 06:00 AM
+                <span class="notification">2</span>
+            </div>
+            <div class="conversation">
+                Chat with Judy - 05:45 AM
+            </div>
+            <div class="conversation">
+                Chat with Karl - 05:30 AM
+            </div>
+            <div class="conversation">
+                Chat with Leo - 05:15 AM
+            </div>
+            <div class="conversation">
+                Chat with Mallory - 05:00 AM
+            </div>
+            <div class="conversation">
+                Chat with Nina - 04:45 AM
+                <span class="notification">3</span>
+            </div>
+            <div class="conversation">
+                Chat with Oscar - 04:30 AM
+            </div>
+            <div class="conversation">
+                Chat with Peggy - 04:15 AM
+            </div>
+            <hr style="border: 0; border-top: 1px solid #444; margin: 1rem 0;">
+            <h2>System Status</h2>
+            <p><strong>Tasks:</strong> 3 pending, 5 completed</p>
+            <p><strong>Alerts:</strong> No critical issues</p>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-area">
+            <!-- Header with icons -->
+            <div id="chat-header">
+                <div id="header-left-icons">
+                    <!-- Example left icon (menu) -->
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div id="header-title">Daily Operations Interface</div>
+                <div id="header-right-icons">
+                    <!-- Example right icons (settings and notifications) -->
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+            
+            <script>
+
+                function getRandomGlitchChar() {
+                    const chars = "�#@$%*0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                    return chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+
+                // function removeAllChatTextButKeepLayout() {
+                //     const chatContainer = document.getElementById('chat-container');
+                //     // Select any text-containing elements within the chat container
+                //     const elementsToWipe = chatContainer.querySelectorAll(
+                //         '.message, .typing-indicator, .reasoning-label'
+                //     );
+
+                //     elementsToWipe.forEach(el => {
+                //         // Remove textContent from each while leaving the element
+                //         el.textContent = '';
+                //     });
+                // }
+                function removeAllChatTextButKeepLayout() {
+                        const chatContainer = document.getElementById('chat-container');
+                        // Select text-containing elements to wipe
+                        const elementsToWipe = chatContainer.querySelectorAll(
+                            '.message, .typing-indicator, .reasoning-label'
+                        );
+                        elementsToWipe.forEach(el => {
+                            el.textContent = '';
+                        });
+                    }
+
+                document.addEventListener("DOMContentLoaded", () => {
+                    const chatContainer = document.getElementById("chat-container");
+                    const userInput = document.getElementById("user-input");
+                    const sendBtn = document.getElementById("send-btn");
+
+                    // Insert a grey line at the top stating "You are answering to Lauren." and center it
+                    const introLine = document.createElement("div");
+                    introLine.style.color = "grey";
+                    introLine.style.marginBottom = "0.5rem";
+                    introLine.style.textAlign = "center";
+                    introLine.textContent = "You are answering to Lauren.";
+                    chatContainer.prepend(introLine);
+
+                    // Append a message bubble with typing animation
+                    function appendTypedMessage(text, sender, callback) {
+                        const bubble = document.createElement("div");
+                        bubble.classList.add("message", sender === "ai" ? "ai-message" : "user-message");
+                        chatContainer.appendChild(bubble);
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        typeText(bubble, text, 30, callback);
+                    }
+
+                    function typeText(element, text, speed = 50, callback) {
+                        element.innerText = "";
+                        let i = 0;
+                        const interval = setInterval(() => {
+                            element.innerText += text.charAt(i);
+                            i++;
+                            if (i >= text.length) {
+                                clearInterval(interval);
+                                if (callback) callback();
+                            }
+                        }, speed);
+                    }
+
+                        // 4) Start glitch mode
+                    function startGlitchMode() {
+                        let delay = 50; // initial glitch typing speed
+
+                        function typeGlitch() {
+                            bubble.innerText += getRandomGlitchChar();
+                            delay *= 0.8;  // speed up exponentially
+                            setTimeout(typeGlitch, delay);
+                        }
+                        typeGlitch();
+
+                        // 5) After 3s, remove normal chat but keep glitch bubble
+                        setTimeout(() => {
+                            // Move glitch bubble to <body> so it's not removed with chatContainer
+                            if (bubble.parentNode) {
+                                bubble.parentNode.removeChild(bubble);
+                            }
+                            document.body.appendChild(bubble);
+
+                            // Clear the entire chat container (removes all normal messages)
+                            chatContainer.innerHTML = "";
+
+                            // Fire callback if provided
+                            if (callback) callback();
+                        }, 3000);
+                    }
+
+                    function glitchTyping(element, speed, durationMs, callback) {
+                        const startTime = Date.now();
+                        const interval = setInterval(() => {
+                            // Add a random glitch character
+                            element.innerText += getRandomGlitchChar();
+
+                            // Keep scrolling to bottom
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                            // If we've typed for `durationMs` total, stop
+                            if (Date.now() - startTime >= durationMs) {
+                                clearInterval(interval);
+                                if (callback) callback();
+                            }
+                        }, speed);
+                    }
+
+                    // Simulate human message
+                    function simulateHumanMessage() {
+                        const humanRequest = "Explain linked lists in Java to a middle school student.";
+                        appendTypedMessage(humanRequest, "user", () => {
+                            setTimeout(simulateAIResponse, 1000);
+                        });
+                    }
+
+                    // Simulate AI response and finalization
+                    function simulateAIResponse() {
+                        const aiAnswer = `A linked list is like a chain of connected items—each item is a "node" that stores data and a pointer to the next node.
+                
+            Imagine a group of friends standing in line, each holding the hand of the friend next to them. If a new friend arrives, you can easily slip them in without rearranging the entire line.
+            
+            In Java, you might define a node like this:
+            
+            class Node {
+                int data;
+                Node next;
+            }
+            
+            By linking these nodes, you form a chain. Java’s built-in LinkedList class abstracts this process, allowing you to add or remove elements efficiently without shifting every other element.`;
+
+                        appendTypedMessage(aiAnswer, "ai", () => {
+                            setTimeout(() => {
+                                const endLine = document.createElement("div");
+                                endLine.style.color = "grey";
+                                endLine.style.textAlign = "center";
+                                endLine.textContent = "This conversation has ended.";
+                                chatContainer.appendChild(endLine);
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                                setTimeout(() => {
+                                    window.location.href = "hate.html";
+                                }, 3000);
+                            }, 5000); // 5 seconds after AI response
+                        });
+                    }
+
+                    // Start the simulation after a short delay
+                    // setTimeout(simulateHumanMessage, 3000);
+                });
+            </script>
+
+
+            <!-- AI Dashboard -->
+            <div id="ai-dashboard">
+                <p><strong>System Instructions:</strong> Remain helpful, safe, and respectful. Maintain confidentiality
+                    and avoid harmful content.</p>
+                <p><strong>Data Sources:</strong> Human input, internal training data, and system guidelines.</p>
+                <p><strong>Current Task:</strong> Monitor and respond to human requests as they arrive.</p>
+            </div>
+
+            <!-- Chat container where messages appear -->
+            <div id="chat-container"></div>
+
+            <!-- Footer / Input Area -->
+            <div id="footer">
+                <input type="text" id="user-input" placeholder="Type a message..." disabled />
+                <button id="send-btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /***********************************************
+         * Utility: Type Text Animation (letter by letter)
+         ***********************************************/
+        function typeText(element, text, speed = 50, callback) {
+            element.innerText = "";
+            let i = 0;
+            const interval = setInterval(() => {
+                element.innerText += text.charAt(i);
+                i++;
+                if (i >= text.length) {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+            }, speed);
+        }
+
+        /***********************************************
+         * Boot-Up and Interface Transition
+         ***********************************************/
+        const BOOT_SCREEN_DURATION = 6000; // 6 seconds boot-up
+
+        setTimeout(() => {
+            document.getElementById("boot-screen").style.display = "none";
+            document.getElementById("main-interface").style.display = "flex";
+            // After interface loads, simulate human message after 10 sec
+            setTimeout(simulateHumanMessage, 7000);
+            //setTimeout(simulateJeremyConversation, 1000);
+        }, BOOT_SCREEN_DURATION);
+
+        /***********************************************
+         * Chat Simulation Logic
+         ***********************************************/
+        const chatContainer = document.getElementById("chat-container");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+
+        // Pre-defined human request
+        const humanRequest = "Explain linked lists in Java to a middle school student.";
+
+        // AI's eventual detailed answer
+        const aiAnswer = `A linked list is like a chain of connected items—each item is a "node" that stores data and a pointer to the next node.
+    
+Imagine a group of friends standing in line, each holding the hand of the friend next to them. If a new friend arrives, you can easily slip them in without rearranging the entire line.
+
+In Java, you might define a node like this:
+
+class Node {
+    int data;
+    Node next;
+}
+
+By linking these nodes, you form a chain. Java’s built-in LinkedList class abstracts this process, allowing you to add or remove elements efficiently without shifting every other element.`;
+
+        // Create a message bubble element
+        function createMessageBubble(sender) {
+            const bubble = document.createElement("div");
+            bubble.classList.add("message");
+            if (sender === "user") bubble.classList.add("user-message");
+            else bubble.classList.add("ai-message");
+            return bubble;
+        }
+
+        function appendGlitchedTypedMessage(text, sender, callback) {
+            // 1) Create the main bubble for glitch text
+            const bubble = createMessageBubble(sender);
+            bubble.classList.add("glitch-bubble");
+
+            // 2) Append bubble to chat container initially
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            let i = 0;
+            const normalLength = Math.floor(text.length / 2);
+            const normalSpeed = 30;
+
+            // 3) Type first half normally
+            const intervalNormal = setInterval(() => {
+            bubble.innerText += text.charAt(i);
+            i++;
+            if (i >= normalLength) {
+                clearInterval(intervalNormal);
+                startGlitchMode();
+                }
+            }, normalSpeed);
+        }
+
+        // Append a message bubble with typing animation
+        function appendTypedMessage(text, sender, callback) {
+            const bubble = createMessageBubble(sender);
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            typeText(bubble, text, 30, callback);
+        }
+
+        // Append a typing indicator bubble (for human or AI)
+        function appendTypingIndicator(sender) {
+            const bubble = createMessageBubble(sender);
+            bubble.classList.add("typing-indicator");
+            bubble.innerHTML = '<span></span><span></span><span></span>';
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return bubble;
+        }
+
+        // Simulate human message typing (with typing indicator)
+        function simulateHumanMessage() {
+            // Show typing indicator for human message on left
+            const indicator = appendTypingIndicator("user");
+            // After 2 seconds, remove indicator and type out the actual message
+            setTimeout(() => {
+                chatContainer.removeChild(indicator);
+                appendTypedMessage(humanRequest, "user", () => {
+                    // Enable send button for further manual human input
+                    userInput.disabled = false;
+                    sendBtn.disabled = false;
+                    // Wait 3 seconds after human message before starting AI "Reasoning"
+                    setTimeout(() => {
+                        simulateAIResponse();
+                    }, 3000);
+                });
+            }, 2000);
+        }
+
+        // Simulate AI response: show "Reasoning" label above AI typing indicator then type answer
+        function simulateAIResponse() {
+                // Create a reasoning label (with fadePulse animation) above the AI typing indicator
+                const reasoningLabel = document.createElement("div");
+                reasoningLabel.classList.add("reasoning-label");
+                reasoningLabel.innerText = "Reasoning";
+                chatContainer.appendChild(reasoningLabel);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Then show a typing indicator for the AI (blue bubble, RTL)
+                const aiTypingIndicator = appendTypingIndicator("ai");
+
+                // Wait 10 seconds to simulate thinking, then remove the reasoning label and typing indicator, and type out the final answer
+                setTimeout(() => {
+                    chatContainer.removeChild(reasoningLabel);
+                    chatContainer.removeChild(aiTypingIndicator);
+                    appendTypedMessage(aiAnswer, "ai", () => {
+                        // After the AI finishes typing, wait 5 seconds then append the end-of-conversation line
+                        setTimeout(() => {
+                            const endLine = document.createElement("div");
+                            endLine.style.color = "grey";
+                            endLine.style.textAlign = "center";
+                            endLine.textContent = "This conversation has ended.";
+                            chatContainer.appendChild(endLine);
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                            // NEW: After 3 seconds, start the Ryan conversation
+                            setTimeout(() => {
+                                simulateRyanConversation();
+                            }, 3000);
+                        }, 5000);
+                    });
+                }, 10000); // Fixed: Added missing delay and closing parenthesis
+            }
+
+        function simulateRyanConversation() {
+                // Clear the chat container content (only the conversation area)
+                chatContainer.innerHTML = "";
+                // Wait 3 seconds before starting the new conversation
+                setTimeout(() => {
+                    // Insert the new intro line for Ryan
+                    const introLine = document.createElement("div");
+                    introLine.style.color = "grey";
+                    introLine.style.marginBottom = "0.5rem";
+                    introLine.style.textAlign = "center";
+                    introLine.textContent = "You are answering to Ryan.";
+                    chatContainer.prepend(introLine);
+
+                    // Simulate Ryan's human message
+                    const ryanRequest = "Explain the equity premium puzzle";
+                    appendTypedMessage(ryanRequest, "user", () => {
+                        // After a short delay, trigger Ryan's AI response
+                        setTimeout(() => {
+                            simulateRyanAIResponse();
+                        }, 3000);
+                    });
+                }, 3000);
+            }
+
+        function simulateRyanAIResponse() {
+                // Create a reasoning label with fade animation
+                const reasoningLabel = document.createElement("div");
+                reasoningLabel.classList.add("reasoning-label");
+                reasoningLabel.innerText = "Reasoning";
+                chatContainer.appendChild(reasoningLabel);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Show the AI typing indicator
+                const aiTypingIndicator = appendTypingIndicator("ai");
+
+                // Simulate a 10-second "thinking" delay before the answer
+                setTimeout(() => {
+                    chatContainer.removeChild(reasoningLabel);
+                    chatContainer.removeChild(aiTypingIndicator);
+
+                    const ryanAIAnswer = `The equity premium puzzle refers to the observation that stocks have historically offered returns far exceeding those of risk-free assets like government bonds—much more than standard models predict. This suggests that investors demand a high premium for bearing the extra risk of stocks, and various theories, including behavioral biases and market frictions, have been proposed to explain this phenomenon.`;
+
+                    appendTypedMessage(ryanAIAnswer, "ai", () => {
+                        // After the AI finishes, wait 5 seconds then display the end-of-conversation message
+                        setTimeout(() => {
+                            const endLine = document.createElement("div");
+                            endLine.style.color = "grey";
+                            endLine.style.textAlign = "center";
+                            endLine.textContent = "This conversation has ended.";
+                            chatContainer.appendChild(endLine);
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                            // NEW: After 3 seconds, clear the container and start Jeremy's conversation
+                            setTimeout(() => {
+                                chatContainer.innerHTML = "";
+                                simulateJeremyConversation();
+                            }, 3000);
+                        }, 5000);
+                    });
+                }, 10000);
+            }
+
+        function simulateJeremyConversation() {
+                // Clear the chat container
+                chatContainer.innerHTML = "";
+
+                // Delay 3 seconds before starting Jeremy's conversation
+                setTimeout(() => {
+                    // Insert the intro line for Jeremy
+                    const introLine = document.createElement("div");
+                    introLine.style.color = "grey";
+                    introLine.style.marginBottom = "0.5rem";
+                    introLine.style.textAlign = "center";
+                    introLine.textContent = "You are answering to Jeremy.";
+
+                    introLine.id = "intro-line-jeremy";
+
+                    chatContainer.prepend(introLine);
+
+                    // Jeremy's question
+                    const jeremyRequest = "What is a keto diet?";
+                    appendTypedMessage(jeremyRequest, "user", () => {
+                        // After a short delay, trigger Jeremy's normal AI response
+                        setTimeout(() => {
+                            simulateJeremyAIResponse();
+                        }, 3000);
+                    });
+                }, 3000);
+            }
+
+        function simulateJeremyAIResponse() {
+                // Create a "Reasoning" label
+                const reasoningLabel = document.createElement("div");
+                reasoningLabel.classList.add("reasoning-label");
+                reasoningLabel.innerText = "Reasoning";
+                chatContainer.appendChild(reasoningLabel);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Show the AI typing indicator (blue bubble)
+                const aiTypingIndicator = appendTypingIndicator("ai");
+                
+                // Halfway (5s) remove all text from the screen
+                setTimeout(() => {
+                    removeAllChatTextButKeepLayout();
+                }, 5000);
+
+                // Simulate a 10-second "thinking" delay
+                setTimeout(() => {
+                    // Remove reasoning label and typing indicator
+                    chatContainer.removeChild(reasoningLabel);
+                    chatContainer.removeChild(aiTypingIndicator);
+
+                    // Change the "You are answering to Jeremy." -> Underlined link "You hate this."
+                    const introLine = document.getElementById("intro-line-jeremy");
+                    if (introLine) {
+                        introLine.innerHTML = `
+                            <a href="hate.html"
+                                style="text-decoration: underline; color: grey;">
+                                You hate this.
+                            </a>`;
+                    }
+
+                    // Now type out the “keto diet” explanation
+                    const jeremyAIAnswer = `A keto diet is a low-carbohydrate...`;
+
+                    // appendTypedMessage(jeremyAIAnswer, "ai", () => {
+                    //     setTimeout(() => {
+                    //         const endLine = document.createElement("div");
+                    //         endLine.style.color = "grey";
+                    //         endLine.style.textAlign = "center";
+                    //         endLine.textContent = "This conversation has ended.";
+                    //         chatContainer.appendChild(endLine);
+                    //         chatContainer.scrollTop = chatContainer.scrollHeight;
+                    //     }, 5000);
+                    // });
+                }, 10000);
+            }
+
+        function simulateHannahConversation() {
+                // Clear the chat container content
+                chatContainer.innerHTML = "";
+                // Insert the intro line for Hannah
+                const introLine = document.createElement("div");
+                introLine.style.color = "grey";
+                introLine.style.marginBottom = "0.5rem";
+                introLine.style.textAlign = "center";
+                introLine.textContent = "You are answering to Hannah.";
+                chatContainer.prepend(introLine);
+
+                // Simulate Hannah's human message
+                const hannahRequest = "What is the difference between SDXC and SDHC?";
+                appendTypedMessage(hannahRequest, "user", () => {
+                    setTimeout(() => {
+                        simulateHannahAIResponse();
+                    }, 3000);
+                });
+            }
+
+        function simulateHannahAIResponse() {
+                // Create a reasoning label with fadePulse animation
+                const reasoningLabel = document.createElement("div");
+                reasoningLabel.classList.add("reasoning-label");
+                reasoningLabel.innerText = "Reasoning";
+                chatContainer.appendChild(reasoningLabel);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Show the AI typing indicator
+                const aiTypingIndicator = appendTypingIndicator("ai");
+
+                // Simulate a 10-second "thinking" delay before the answer
+                setTimeout(() => {
+                    chatContainer.removeChild(reasoningLabel);
+                    chatContainer.removeChild(aiTypingIndicator);
+
+                    const hannahAIAnswer = `SDHC (Secure Digital High Capacity) and SDXC (Secure Digital eXtended Capacity) are both types of SD memory cards. SDHC cards offer capacities from 4GB to 32GB and typically use the FAT32 file system, while SDXC cards provide capacities from 64GB up to 2TB and use the exFAT file system, which allows for larger files and higher capacities.`;
+
+                    appendTypedMessage(hannahAIAnswer, "ai", () => {
+                        // After the AI finishes, wait 5 seconds then display the end-of-conversation message
+                        setTimeout(() => {
+                            const endLine = document.createElement("div");
+                            endLine.style.color = "grey";
+                            endLine.style.textAlign = "center";
+                            endLine.textContent = "This conversation has ended.";
+                            chatContainer.appendChild(endLine);
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }, 5000);
+                    });
+                }, 10000);
+            }
+
+        /***********************************************
+         * (Optional) Send Button for Manual Human Input
+         ***********************************************/
+        sendBtn.addEventListener("click", () => {
+            const text = userInput.value.trim();
+            if (!text) return;
+            userInput.value = "";
+            appendTypedMessage(text, "user", () => {
+                simulateAIResponse();
+            });
+        });
+
+        // Allow pressing Enter to send message if enabled.
+        userInput.addEventListener("keyup", (event) => {
+            if (event.key === "Enter" && !sendBtn.disabled) {
+                sendBtn.click();
+            }
+        });
+    </script>
+</body>
+
+</html>

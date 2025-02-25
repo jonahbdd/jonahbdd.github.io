@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>.</title>
+    <!-- p5.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <!-- p5.sound library to handle the audio -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        let particles = [];
+        let flowField;
+        let cols, rows;
+        let scl = 20;
+        let zoff = 0;
+        let hueOffset = 0;
+
+        let song; // We'll store the loaded song here
+
+        // Preload the MP3 so it's ready at setup
+        function preload() {
+            // song2.mp3 must be in the same folder as this HTML file
+            song = loadSound('song2.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            colorMode(HSB, 360, 100, 100, 100);
+
+            // Attempt to autoplay the song in a loop
+            // Note: Some browsers block autoplay without user interaction
+            song.loop();
+
+            // Set up the 5-second redirect
+            setTimeout(() => {
+                window.location.href = "3.html";
+            }, 5000);
+
+            cols = floor(width / scl);
+            rows = floor(height / scl);
+            flowField = new Array(cols * rows);
+
+            for (let i = 0; i < 500; i++) {
+                particles.push(new Particle());
+            }
+
+            background(0);
+        }
+
+        function draw() {
+            let yoff = 0;
+            for (let y = 0; y < rows; y++) {
+                let xoff = 0;
+                for (let x = 0; x < cols; x++) {
+                    let index = x + y * cols;
+                    let angle = noise(xoff, yoff, zoff) * TWO_PI * 4;
+                    let v = p5.Vector.fromAngle(angle);
+                    v.setMag(0.5);
+                    flowField[index] = v;
+                    xoff += 0.1;
+                }
+                yoff += 0.1;
+            }
+
+            zoff += 0.01;
+            hueOffset += 0.5;
+
+            for (let p of particles) {
+                p.follow(flowField);
+                p.update();
+                p.edges();
+                p.show();
+            }
+        }
+
+        class Particle {
+            constructor() {
+                this.pos = createVector(random(width), random(height));
+                this.vel = createVector(0, 0);
+                this.acc = createVector(0, 0);
+                this.maxSpeed = 4;
+                this.prevPos = this.pos.copy();
+                this.hue = random(360);
+            }
+
+            follow(vectors) {
+                let x = floor(this.pos.x / scl);
+                let y = floor(this.pos.y / scl);
+                let index = x + y * cols;
+                let force = vectors[index];
+                this.applyForce(force);
+            }
+
+            applyForce(force) {
+                this.acc.add(force);
+            }
+
+            update() {
+                this.vel.add(this.acc);
+                this.vel.limit(this.maxSpeed);
+                this.pos.add(this.vel);
+                this.acc.mult(0);
+            }
+
+            edges() {
+                if (this.pos.x > width) {
+                    this.pos.x = 0;
+                    this.prevPos = this.pos.copy();
+                }
+                if (this.pos.x < 0) {
+                    this.pos.x = width;
+                    this.prevPos = this.pos.copy();
+                }
+                if (this.pos.y > height) {
+                    this.pos.y = 0;
+                    this.prevPos = this.pos.copy();
+                }
+                if (this.pos.y < 0) {
+                    this.pos.y = height;
+                    this.prevPos = this.pos.copy();
+                }
+            }
+
+            show() {
+                stroke((this.hue + hueOffset) % 360, 80, 100, 50);
+                strokeWeight(2);
+                line(this.pos.x, this.pos.y, this.prevPos.x, this.prevPos.y);
+                this.prevPos = this.pos.copy();
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>

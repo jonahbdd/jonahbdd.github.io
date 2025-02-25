@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>.</title>
+    <!-- p5.js library with WebGL -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <!-- p5.dom (optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.dom.min.js"></script>
+    <!-- p5.sound for audio -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        /* Fill the entire window, remove scrollbars */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        /*
+          EXTREMELY HEAVY p5.js SKETCH + Audio + 5s Redirect
+          by ChatGPT (OpenAI) - Original Creator
+    
+          - Renders 2,000+ shapes each frame with complex shading & transformations.
+          - Includes a massive array shuffle & fractal recursion for extra CPU load.
+          - Plays 5.mp3 (must be in the same folder).
+          - Redirects to 6.html after 5 seconds.
+        */
+
+        let giantArray = [];
+        let shapes = [];
+        const NUM_SHAPES = 2000; // Intentionally large for stress
+        let song;
+
+        function preload() {
+            // Load the MP3; must have 5.mp3 in the same folder
+            song = loadSound('5.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+
+            // Attempt to loop the song (some browsers may require user interaction)
+            song.loop();
+
+            // Redirect to 6.html after 5 seconds
+            setTimeout(() => {
+                window.location.href = "6.html";
+            }, 5000);
+
+            // Pre-generate a huge array of random numbers (1 million entries)
+            for (let i = 0; i < 1000000; i++) {
+                giantArray.push(random());
+            }
+
+            // Create shape data
+            for (let i = 0; i < NUM_SHAPES; i++) {
+                shapes.push({
+                    x: random(-2000, 2000),
+                    y: random(-2000, 2000),
+                    z: random(-2000, 2000),
+                    size: random(10, 200),
+                    type: floor(random(3)), // 0=box, 1=sphere, 2=torus
+                    spinX: random(0.001, 0.01),
+                    spinY: random(0.001, 0.01),
+                    rotX: random(TWO_PI),
+                    rotY: random(TWO_PI)
+                });
+            }
+        }
+
+        function draw() {
+            background(0);
+
+            // Lighting
+            directionalLight(255, 255, 255, 1, -1, -1);
+            pointLight(255, 128, 128, 0, 0, 1000);
+
+            // Rotate entire scene slowly
+            rotateY(frameCount * 0.001);
+            rotateX(frameCount * 0.0005);
+
+            // Draw the thousands of shapes
+            for (let i = 0; i < NUM_SHAPES; i++) {
+                push();
+                let s = shapes[i];
+                translate(s.x, s.y, s.z);
+
+                // Spin each shape
+                s.rotX += s.spinX;
+                s.rotY += s.spinY;
+                rotateX(s.rotX);
+                rotateY(s.rotY);
+
+                // Color via Perlin noise
+                let r = noise(s.x * 0.01, s.y * 0.01, frameCount * 0.01) * 255;
+                let g = noise(s.y * 0.01, s.z * 0.01, frameCount * 0.01 + 1000) * 255;
+                let b = noise(s.z * 0.01, s.x * 0.01, frameCount * 0.01 + 2000) * 255;
+                fill(r, g, b);
+
+                // Draw shape
+                if (s.type === 0) {
+                    box(s.size);
+                } else if (s.type === 1) {
+                    sphere(s.size * 0.5);
+                } else {
+                    torus(s.size * 0.5, s.size * 0.2, 24, 16);
+                }
+                pop();
+            }
+
+            // Additional CPU overhead: fractal recursion
+            let startVal = map(sin(frameCount * 0.01), -1, 1, 2, 8);
+            fractalRecursion(width * 0.5, startVal);
+
+            // Shuffle the huge array occasionally
+            if (frameCount % 60 === 0) {
+                shuffleArray(giantArray);
+            }
+        }
+
+        // Fractal recursion
+        function fractalRecursion(x, depth) {
+            if (depth <= 0) return;
+            // do some heavy computations
+            let sum = 0;
+            for (let i = 0; i < 20000; i++) {
+                sum += noise(i, x);
+            }
+            fractalRecursion(x * 0.9, depth - 1);
+            fractalRecursion(x * 1.1, depth - 1);
+        }
+
+        // Shuffle array for overhead
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = floor(random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>

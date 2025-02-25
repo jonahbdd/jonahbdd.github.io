@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Terminal Sequence</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            font-family: "Courier New", Courier, monospace;
+            color: lightgray;
+            overflow: hidden;
+            /* Avoid unwanted scrollbars */
+        }
+
+        /* Fullscreen container for everything */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Black overlay for the initial 3-second delay */
+        #blackOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 999;
+            /* Ensures it covers everything */
+        }
+
+        /* Container that holds all typed lines, placed around the middle-left */
+        .text-container {
+            position: absolute;
+            top: 35%;
+            /* Adjust for vertical positioning */
+            left: 15%;
+            /* Adjust for horizontal positioning */
+            width: 70%;
+            /* So lines don't overflow horizontally */
+        }
+
+        /* Text line styling */
+        .line {
+            margin: 0.5rem 0;
+            white-space: pre-wrap;
+            /* Type letter by letter without shifting */
+        }
+
+        /* Terminal input (with underline) on the right side */
+        #terminalInput {
+            display: none;
+            /* Hidden until needed */
+            position: absolute;
+            bottom: 30%;
+            /* Adjust for vertical positioning */
+            right: 15%;
+            /* Adjust for horizontal positioning */
+            width: 300px;
+            /* Adjust width as needed */
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid lightgray;
+            /* Only an underline */
+            outline: none;
+            color: lightgray;
+            font-size: 1rem;
+            caret-color: lightgray;
+        }
+
+        /* Slightly bigger, slightly misaligned link */
+        .final-link {
+            font-size: 2.2rem;
+            text-decoration: underline;
+            margin-left: 3rem;
+            /* “Misaligned” shift */
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Black overlay that will vanish after 3 seconds -->
+        <div id="blackOverlay"></div>
+
+        <!-- A container for the lines of text -->
+        <div class="text-container">
+            <p class="line" id="line1"></p>
+            <p class="line" id="line2"></p>
+            <p class="line" id="line3"></p>
+        </div>
+
+        <!-- Terminal-like input field -->
+        <input type="text" id="terminalInput" autocomplete="off" />
+    </div>
+
+    <script>
+        // Simple typing animation function
+        function typeText(element, text, speed, callback) {
+            let index = 0;
+            const timer = setInterval(() => {
+                element.textContent += text[index];
+                index++;
+                if (index === text.length) {
+                    clearInterval(timer);
+                    if (callback) callback();
+                }
+            }, speed);
+        }
+
+        // References to DOM elements
+        const blackOverlay = document.getElementById('blackOverlay');
+        const line1 = document.getElementById('line1');
+        const line2 = document.getElementById('line2');
+        const line3 = document.getElementById('line3');
+        const terminalInput = document.getElementById('terminalInput');
+
+        // STEP 1: Keep screen black for 3 seconds, then remove overlay
+        setTimeout(() => {
+            blackOverlay.style.display = 'none';
+            // STEP 2: Type "We’ve been through this."
+            typeText(line1, "We’ve been through this.", 50, () => {
+                // STEP 3: After 2 sec, show input for user
+                setTimeout(() => {
+                    showInput();
+                    // Wait for user to press Enter
+                    waitForEnter(() => {
+                        // Hide input
+                        hideInput();
+                        // STEP 4: After 3 sec, type "Understood, but you want more."
+                        setTimeout(() => {
+                            typeText(line2, "Understood, but you want more.", 50, () => {
+                                // STEP 5: After 2 sec, show input again
+                                setTimeout(() => {
+                                    showInput();
+                                    waitForEnter(() => {
+                                        hideInput();
+                                        // STEP 6: After 5 sec, show final text with link
+                                        setTimeout(() => {
+                                            line3.innerHTML = `
+                                                <a class="final-link" href="next.html">
+                                                    Let your freedom roam.
+                                                </a>`;
+                                        }, 5000);
+                                    });
+                                }, 2000);
+                            });
+                        }, 3000);
+                    });
+                }, 2000);
+            });
+        }, 3000);
+
+        // Show the terminal input
+        function showInput() {
+            terminalInput.style.display = 'block';
+            terminalInput.value = '';
+            terminalInput.focus();
+        }
+
+        // Hide the terminal input
+        function hideInput() {
+            terminalInput.style.display = 'none';
+        }
+
+        // Utility: Waits until the user presses Enter in the input
+        function waitForEnter(callback) {
+            function onKey(e) {
+                if (e.key === 'Enter') {
+                    terminalInput.removeEventListener('keydown', onKey);
+                    callback();
+                }
+            }
+            terminalInput.addEventListener('keydown', onKey);
+        }
+    </script>
+</body>
+
+</html>

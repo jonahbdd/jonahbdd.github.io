@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>AI & CONSUMERISM: Final Statement (Audio + Redirect)</title>
+    <!-- p5.js libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.dom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        /*
+         * AI & CONSUMERISM: Final Statement (Audio + Redirect)
+         * by ChatGPT (OpenAI) - Original Creator
+         *
+         * Features:
+         *  - Merges 2D and 3D in a single scene that transitions between them.
+         *  - Complex geometry:
+         *    * Fractal-like expansions (metallic spires, twisted shapes)
+         *    * Drifting arrays of cubes, spheres, torus
+         *    * Rotating text banners referencing "AI" / "CONSUME" for thematic emphasis
+         *  - The camera orbits, zooms, shifts from 2D overhead to full 3D vantage,
+         *    then overlays glitchy 2D text.
+         *  - A surreal, cautionary swirl: "Beware."
+         *
+         * Now plays finalsong.mp3 and redirects to end.html after 15 seconds.
+         */
+
+        // Arrays for geometry
+        let shapes = [];
+        const NUM_SHAPES = 100;
+        let spires = [];
+        const SPIRE_COUNT = 6;
+
+        // Camera / state parameters
+        let cameraAngle = 0;
+        let cameraState = 0;
+        let transitionProgress = 0;
+        let stateChangeTimer = 0;
+        let globalHue = 0;
+
+        // Text banners
+        let texts = ["AI", "CONSUME", "AI", "CONSUME", "BEWARE"];
+        let textObjects = [];
+
+        // Audio
+        let song;
+
+        function preload() {
+            // Load finalsong.mp3 from the same folder
+            song = loadSound('song6.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            colorMode(HSB, 360, 100, 100, 100);
+            noStroke();
+
+            // Attempt to autoplay the song in a loop
+            song.loop();
+
+            // Redirect to end.html after 15 seconds
+            setTimeout(() => {
+                window.location.href = "end.html";
+            }, 15000);
+
+            // Initialize random shapes
+            for (let i = 0; i < NUM_SHAPES; i++) {
+                shapes.push({
+                    x: random(-800, 800),
+                    y: random(-400, 400),
+                    z: random(-800, 800),
+                    size: random(40, 100),
+                    hue: random(360),
+                    type: floor(random(3)),  // 0 = box, 1 = sphere, 2 = torus
+                    spin: random(0.01, 0.03),
+                    spinAngle: random(TWO_PI)
+                });
+            }
+
+            // Initialize spires (fractal-like expansions)
+            for (let i = 0; i < SPIRE_COUNT; i++) {
+                let angle = (TWO_PI / SPIRE_COUNT) * i;
+                let radius = 600;
+                let x = radius * cos(angle);
+                let z = radius * sin(angle);
+                spires.push({
+                    x: x,
+                    y: 0,
+                    z: z,
+                    baseHue: random(360)
+                });
+            }
+
+            // Populate text objects from the texts array
+            for (let i = 0; i < texts.length; i++) {
+                textObjects.push({
+                    str: texts[i],
+                    spin: random(0.005, 0.02),
+                    angle: random(TWO_PI),
+                    radius: random(150, 300),
+                    hue: random(360)
+                });
+            }
+        }
+
+        function draw() {
+            background(0);
+
+            // Subtle color shift
+            globalHue = (globalHue + 0.2) % 360;
+
+            // Possibly switch camera states occasionally
+            cameraLogic();
+
+            // Let camera move based on state
+            applyCameraTransition();
+
+            // LIGHTS
+            ambientLight(30);
+            directionalLight(255, 255, 255, 1, -1, -1);
+            pointLight(255, 255, 255, 0, -500, 500);
+
+            // Draw 3D geometry
+            drawShapes();
+            drawSpires();
+            drawFloatingText();
+
+            // Overlay 2D if in overhead or close-up
+            if (cameraState === 1 || cameraState === 2) {
+                overlay2D();
+            }
+        }
+
+        /*------------------------------------------
+         *     CAMERA & STATE LOGIC
+         *-----------------------------------------*/
+        function cameraLogic() {
+            // Switch states every 400 frames or so
+            if (frameCount - stateChangeTimer > 400) {
+                cameraState = (cameraState + 1) % 3;
+                transitionProgress = 0;
+                stateChangeTimer = frameCount;
+            }
+        }
+
+        function applyCameraTransition() {
+            transitionProgress = constrain((frameCount - stateChangeTimer) / 100, 0, 1);
+
+            // Camera state cycle: 0 -> wide orbit, 1 -> overhead 2D, 2 -> close-up center
+            if (cameraState === 0) {
+                // Wide orbit
+                cameraAngle += 0.003;
+                let camX = 800 * cos(cameraAngle);
+                let camZ = 800 * sin(cameraAngle);
+                camera(camX, 200, camZ, 0, 0, 0, 0, 1, 0);
+            } else if (cameraState === 1) {
+                // Overhead top-down: lerp from orbit to overhead
+                cameraAngle += 0.003 * (1 - transitionProgress);
+                let orbitX = 800 * cos(cameraAngle);
+                let orbitZ = 800 * sin(cameraAngle);
+                let orbitY = 200;
+                let overheadX = 0;
+                let overheadY = 1000;
+                let overheadZ = 0;
+                let camX = lerp(orbitX, overheadX, transitionProgress);
+                let camY = lerp(orbitY, overheadY, transitionProgress);
+                let camZ = lerp(orbitZ, overheadZ, transitionProgress);
+                camera(camX, camY, camZ, 0, 0, 0, 0, 0, -1);
+            } else if (cameraState === 2) {
+                // Close-up center: revolve slowly
+                cameraAngle += 0.003;
+                let distance = lerp(800, 200, transitionProgress);
+                let camX = distance * cos(cameraAngle);
+                let camZ = distance * sin(cameraAngle);
+                let camY = lerp(1000, 50, transitionProgress);
+                camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
+            }
+        }
+
+        /*------------------------------------------
+         *         DRAWING THE 3D OBJECTS
+         *-----------------------------------------*/
+        function drawShapes() {
+            for (let s of shapes) {
+                push();
+                translate(s.x, s.y, s.z);
+                // Spin the shape
+                s.spinAngle += s.spin;
+                rotateY(s.spinAngle);
+                let dynamicHue = (s.hue + frameCount * 0.1) % 360;
+                fill(dynamicHue, 70, 90);
+                if (s.type === 0) {
+                    box(s.size);
+                } else if (s.type === 1) {
+                    sphere(s.size / 2);
+                } else {
+                    torus(s.size * 0.5, s.size * 0.2, 24, 16);
+                }
+                pop();
+            }
+        }
+
+        function drawSpires() {
+            for (let sp of spires) {
+                push();
+                translate(sp.x, sp.y, sp.z);
+                rotateY(frameCount * 0.002);
+                let levels = 5;
+                for (let i = 0; i < levels; i++) {
+                    let frac = i / levels;
+                    let scaleVal = map(frac, 0, 1, 1, 0.2);
+                    push();
+                    translate(0, -50 * i, 0);
+                    scale(scaleVal);
+                    fill((sp.baseHue + frac * 100 + frameCount * 0.1) % 360, 60, 80);
+                    twistedCylinder(80, 200);
+                    pop();
+                }
+                pop();
+            }
+        }
+
+        // A custom twisted cylinder shape
+        function twistedCylinder(rad, h) {
+            let detail = 36;
+            let angleStep = TWO_PI / detail;
+            beginShape(TRIANGLE_STRIP);
+            for (let i = 0; i <= detail; i++) {
+                let angle = i * angleStep;
+                let x = rad * cos(angle);
+                let z = rad * sin(angle);
+                // twist factor
+                let twist = 0.03 * h * sin(frameCount * 0.01 + angle * 2);
+                // top vertex
+                vertex(x + twist, -h / 2, z);
+                // bottom vertex
+                vertex(x - twist, h / 2, z);
+            }
+            endShape();
+        }
+
+        // Floating rotating text banners referencing AI / consumerism
+        function drawFloatingText() {
+            push();
+            for (let txtObj of textObjects) {
+                push();
+                txtObj.angle += txtObj.spin;
+                let x = txtObj.radius * cos(txtObj.angle);
+                let z = txtObj.radius * sin(txtObj.angle);
+                translate(x, 0, z);
+                rotateY(-txtObj.angle);
+                fill((txtObj.hue + frameCount * 0.2) % 360, 80, 90);
+                textSize(40);
+                textAlign(CENTER, CENTER);
+                text(txtObj.str, 0, 0);
+                pop();
+            }
+            pop();
+        }
+
+        /*------------------------------------------
+         *         2D OVERLAY
+         *-----------------------------------------*/
+        function overlay2D() {
+            push();
+            resetMatrix(); // Switch to 2D coordinate system
+            translate(0, 0);
+            fill(0, 0, 0, 60);
+            rect(0, 0, width, height);
+            // Draw glitch lines
+            stroke(255, 80);
+            let linesCount = 20;
+            for (let i = 0; i < linesCount; i++) {
+                let lx = random(width);
+                let ly1 = random(height);
+                let ly2 = random(height);
+                line(lx, ly1, lx + random(-50, 50), ly2);
+            }
+            // Big text overlay
+            noStroke();
+            fill(360 - (globalHue % 360), 80, 100, 90);
+            textSize(60);
+            textAlign(CENTER, CENTER);
+            text("AI & CONSUMERISM", width / 2, height / 2);
+            // Sub-warning text
+            fill((globalHue + 180) % 360, 90, 100, 80);
+            textSize(30);
+            text("BEWARE", width / 2, height / 2 + 60);
+            pop();
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>

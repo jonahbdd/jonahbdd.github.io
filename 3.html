@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>.</title>
+    <!-- p5.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <!-- p5.sound for audio -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        /* 
+          EPHEMERAL SWARM + Audio & Redirect
+          - Overlapping points swirl in fractal patterns.
+          - Impermanence: shapes congeal, then dissolve.
+          - Plays song3.mp3
+          - Redirects to 4.html after 5 seconds
+        */
+
+        let swarm = [];
+        let maxPoints = 1500;
+        let angleOffset = 0;
+
+        let song;
+
+        function preload() {
+            // Load song3.mp3 (must be in same folder)
+            song = loadSound('song3.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            noStroke();
+
+            // Attempt to play the song in a loop.
+            // Some browsers may require user interaction to start audio.
+            song.loop();
+
+            // Auto-redirect to 4.html after 5 seconds
+            setTimeout(() => {
+                window.location.href = "4.html";
+            }, 5000);
+        }
+
+        function draw() {
+            background(0);
+
+            // Slight camera orbit
+            rotateY(frameCount * 0.0015);
+            rotateX(frameCount * 0.001);
+
+            // Add new points
+            for (let i = 0; i < 5; i++) {
+                swarm.push({
+                    x: random(-1, 1),
+                    y: random(-1, 1),
+                    z: random(-1, 1),
+                    life: random(20, 200) // life in frames
+                });
+            }
+
+            // Remove oldest points if swarm gets too big
+            if (swarm.length > maxPoints) {
+                swarm.splice(0, swarm.length - maxPoints);
+            }
+
+            // Draw each point
+            for (let p of swarm) {
+                p.life -= 0.5;
+                let alpha = map(p.life, 0, 200, 0, 255);
+
+                // Expand from center with swirl motion
+                let swirl = 2 + sin(frameCount * 0.01 + p.x * 10 + p.y * 10) * 1;
+                let rx = p.x * swirl * 200;
+                let ry = p.y * swirl * 200;
+                let rz = p.z * swirl * 200;
+
+                // Dynamic color pulses
+                let r = 128 + 128 * sin(frameCount * 0.005 + rx * 0.01);
+                let g = 128 + 128 * sin(frameCount * 0.003 - ry * 0.01);
+                let b = 128 + 128 * cos(frameCount * 0.004 + rz * 0.01);
+
+                push();
+                translate(rx, ry, rz);
+                fill(r, g, b, alpha);
+                sphere(2 + sin(p.life * 0.1)); // small pulsating sphere
+                pop();
+            }
+
+            angleOffset += 0.01;
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>.</title>
+    <!-- p5.js library (WebGL) -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.dom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        /* Fill the entire screen and remove scrollbars */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        /*
+         * DISTURBING DARK 3D WORLD
+         * by ChatGPT (OpenAI) - Original Creator
+         * 
+         * Features:
+         *  - Horrific, pulsating environment with "fleshy" and "bony" structures
+         *  - Dripping blood-like elements / Red tinted lighting
+         *  - Floating skull-like shapes with spikes
+         *  - Flickering, low ambient light to evoke dread
+         *  - Subtle camera drift for uneasy motion
+         *
+         * Now plays song7.mp3 and redirects to 8.html after 5 seconds.
+         */
+
+        // Lists to store "skull-like" objects and "spike pillars" or "fleshy walls"
+        let skulls = [];
+        let pillars = [];
+        let wallSegments = [];
+
+        // Some parameters
+        const SKULL_COUNT = 10;     // Number of floating skull-like objects
+        const PILLAR_COUNT = 6;     // Number of bone/spike pillars
+        const WALL_COUNT = 8;       // Number of fleshy "wall" segments
+
+        let angle = 0;             // For camera movement
+
+        // Audio variable
+        let song;
+
+        // Preload the song7.mp3 so it's ready when setup runs.
+        function preload() {
+            song = loadSound('song7.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            noStroke();
+
+            // Play the song on loop (note: some browsers may block autoplay without user interaction)
+            song.loop();
+
+            // Redirect to 8.html after 5 seconds
+            setTimeout(() => {
+                window.location.href = "8.html";
+            }, 5000);
+
+            // Build the disturbing structures
+            initSkulls();
+            initPillars();
+            initWalls();
+        }
+
+        function draw() {
+            background(0);
+
+            // Soft flickering red ambient
+            let flicker = map(sin(frameCount * 0.1), -1, 1, 10, 40);
+            ambientLight(flicker, 0, 0);
+
+            // Add a more direct red light
+            directionalLight(200, 30, 30, 0, -1, -1);
+
+            // Slight camera drift in orbit
+            angle += 0.0005;
+            rotateY(angle);
+            translate(0, 0, 0);
+
+            // Draw the environment: walls, pillars, skulls
+            drawWalls();
+            drawPillars();
+            drawSkulls();
+        }
+
+        /*--------------------------------
+         *           WALLS
+         *--------------------------------*/
+        function initWalls() {
+            // Position walls in a circular arrangement
+            for (let i = 0; i < WALL_COUNT; i++) {
+                let dist = 1000;
+                let angleWall = (TWO_PI / WALL_COUNT) * i;
+                let x = dist * cos(angleWall);
+                let z = dist * sin(angleWall);
+                let y = random(-200, 200);
+
+                // Random orientation
+                let rotY = random(TWO_PI);
+
+                wallSegments.push({
+                    x: x, y: y, z: z,
+                    rotateY: rotY,
+                    width: random(300, 500),
+                    height: random(400, 600),
+                    offset: random(1000)
+                });
+            }
+        }
+
+        function drawWalls() {
+            push();
+            for (let w of wallSegments) {
+                push();
+                translate(w.x, w.y, w.z);
+                rotateY(w.rotateY);
+                drawFleshyPlane(w.width, w.height, w.offset);
+                pop();
+            }
+            pop();
+        }
+
+        function drawFleshyPlane(w, h, offset) {
+            let detailX = 20;
+            let detailY = 20;
+            let stepX = w / detailX;
+            let stepY = h / detailY;
+            let halfW = w / 2;
+            let halfH = h / 2;
+
+            // Base flesh color
+            fill(random(120, 160), 0, 0);
+
+            for (let y = 0; y < detailY; y++) {
+                beginShape(TRIANGLE_STRIP);
+                for (let x = 0; x <= detailX; x++) {
+                    let xPos = map(x, 0, detailX, -halfW, halfW);
+                    let yPos = map(y, 0, detailY, -halfH, halfH);
+                    vertexWithDistortion(xPos, yPos, offset);
+
+                    let yPos2 = map(y + 1, 0, detailY, -halfH, halfH);
+                    vertexWithDistortion(xPos, yPos2, offset);
+                }
+                endShape();
+            }
+        }
+
+        function vertexWithDistortion(x, y, offset) {
+            let freq = 0.02;
+            let amplitude = 15;
+            let z = sin((x + offset) * freq + frameCount * 0.03) * amplitude +
+                cos((y + offset) * freq + frameCount * 0.03) * amplitude;
+            let redVal = 120 + sin((x + y + frameCount) * 0.01) * 30;
+            fill(redVal, 0, 0);
+            vertex(x, y, z);
+        }
+
+        /*--------------------------------
+         *           PILLARS
+         *--------------------------------*/
+        function initPillars() {
+            for (let i = 0; i < PILLAR_COUNT; i++) {
+                let angleP = (TWO_PI / PILLAR_COUNT) * i;
+                let radius = 600;
+                let x = radius * cos(angleP);
+                let z = radius * sin(angleP);
+                let height = random(500, 1000);
+                let thick = random(50, 100);
+                pillars.push({
+                    x: x,
+                    z: z,
+                    height: height,
+                    thick: thick,
+                    spin: random(TWO_PI),
+                    spinSpeed: random(0.001, 0.005)
+                });
+            }
+        }
+
+        function drawPillars() {
+            for (let p of pillars) {
+                push();
+                translate(p.x, 0, p.z);
+                rotateY(p.spin);
+                p.spin += p.spinSpeed;
+                drawBonePillar(p.height, p.thick);
+                pop();
+            }
+        }
+
+        function drawBonePillar(h, d) {
+            let detail = 15;
+            let stepAngle = TWO_PI / detail;
+            fill(80, 80, 80);
+            beginShape(TRIANGLE_STRIP);
+            for (let i = 0; i <= detail; i++) {
+                let angle = i * stepAngle;
+                let x = cos(angle) * d;
+                let z = sin(angle) * d;
+                vertexWithSpike(x, -h / 2, z);
+                vertexWithSpike(x, h / 2, z);
+            }
+            endShape();
+        }
+
+        function vertexWithSpike(x, y, z) {
+            let chanceSpike = 0.15;
+            if (random() < chanceSpike) {
+                let spikeLength = random(20, 60);
+                let spikeDir = createVector(x, 0, z).normalize();
+                x += spikeDir.x * spikeLength;
+                z += spikeDir.z * spikeLength;
+            }
+            vertex(x, y, z);
+        }
+
+        /*--------------------------------
+         *           SKULLS
+         *--------------------------------*/
+        function initSkulls() {
+            for (let i = 0; i < SKULL_COUNT; i++) {
+                let x = random(-800, 800);
+                let y = random(-200, 200);
+                let z = random(-800, 800);
+                let size = random(80, 150);
+                let hue = random(10, 60);
+                let drift = random(0.001, 0.01);
+                skulls.push({
+                    x: x, y: y, z: z,
+                    size: size,
+                    hue: hue,
+                    driftSpeed: drift,
+                    yoff: random(1000),
+                    rotation: random(TWO_PI),
+                    spinSpeed: random(-0.01, 0.01)
+                });
+            }
+        }
+
+        function drawSkulls() {
+            for (let s of skulls) {
+                push();
+                let driftX = sin(frameCount * s.driftSpeed + s.x * 0.01) * 30;
+                let driftY = sin(s.yoff) * 20;
+                let driftZ = cos(frameCount * s.driftSpeed + s.z * 0.01) * 30;
+                s.yoff += 0.01;
+                translate(s.x + driftX, s.y + driftY, s.z + driftZ);
+                s.rotation += s.spinSpeed;
+                rotateY(s.rotation);
+                drawSkull(s.size, s.hue);
+                pop();
+            }
+        }
+
+        function drawSkull(r, hueVal) {
+            fill(hueVal, 100 - hueVal, 100 - hueVal);
+            let detail = 20;
+            let distFactor = 0.3;
+            beginShape(TRIANGLE_STRIP);
+            for (let lat = 0; lat <= detail; lat++) {
+                let theta1 = map(lat, 0, detail, 0, PI);
+                let theta2 = map(lat + 1, 0, detail, 0, PI);
+                for (let lon = 0; lon <= detail; lon++) {
+                    let phi = map(lon, 0, detail, 0, TWO_PI);
+                    vertexSkull(r, theta1, phi, distFactor);
+                    vertexSkull(r, theta2, phi, distFactor);
+                }
+            }
+            endShape();
+
+            // Eye sockets
+            push();
+            fill(0);
+            rotateY(PI);
+            translate(0, -r * 0.2, r * 0.95);
+            push();
+            translate(-r * 0.25, 0, 0);
+            sphere(r * 0.1, 10, 10);
+            pop();
+            push();
+            translate(r * 0.25, 0, 0);
+            sphere(r * 0.1, 10, 10);
+            pop();
+            pop();
+
+            // Jaw region with spikes
+            push();
+            fill(20, 20, 20);
+            rotateY(PI);
+            translate(0, r * 0.2, r * 0.92);
+            rotateX(PI / 2);
+            let segments = 16;
+            let radius = r * 0.3;
+            let ringWidth = r * 0.04;
+            beginShape(TRIANGLE_STRIP);
+            for (let i = 0; i <= segments; i++) {
+                let ang = map(i, 0, segments, 0, TWO_PI);
+                let x = cos(ang) * radius;
+                let z = sin(ang) * radius;
+                let x2 = cos(ang) * (radius + ringWidth);
+                let z2 = sin(ang) * (radius + ringWidth);
+                if (random() < 0.2) {
+                    let spikeLen = random(r * 0.1, r * 0.2);
+                    x2 += cos(ang) * spikeLen;
+                    z2 += sin(ang) * spikeLen;
+                }
+                vertex(x, 0, z);
+                vertex(x2, 0, z2);
+            }
+            endShape();
+            pop();
+        }
+
+        function vertexSkull(r, th, ph, factor) {
+            let x = r * sin(th) * cos(ph);
+            let y = r * cos(th);
+            let z = r * sin(th) * sin(ph);
+            let distort = sin((x + z + frameCount) * 0.01) * factor * r;
+            x += distort * sin(ph);
+            y += distort * 0.5;
+            z += distort * cos(ph);
+            vertex(x, y, z);
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>

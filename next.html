@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            cursor: none;
+        }
+
+        .section {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .blurred {
+            filter: blur(8px);
+            pointer-events: none;
+        }
+
+        .text-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            pointer-events: none;
+        }
+
+        .text-visible {
+            display: block;
+        }
+
+        .button-box {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        .button-box button {
+            padding: 8px 16px;
+            font-size: 1.2rem;
+            font-family: 'Courier New', Courier, monospace;
+            color: black;
+            background-color: lightgray;
+            border: 2px solid black;
+            cursor: pointer;
+        }
+
+        .disabled-click {
+            pointer-events: none;
+        }
+    </style>
+    <script>
+        let clickCount = 0;
+        let isPaused = false;
+        let audioContext, audioElement, audioSource, lowpassFilter;
+        let totalSections = 1;
+        let blackSections = 0;
+        let currentTextBox;
+
+        function randomGradient() {
+            function getColor() {
+                let color = Math.floor(Math.random() * 16777215).toString(16);
+                return color.padStart(6, '0');
+            }
+
+            const colors = [
+                `#${getColor()}`,
+                `#${getColor()}`
+            ];
+            return `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
+        }
+
+        function setupAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioElement = new Audio('telepath.mp3');
+            audioElement.loop = true;
+            audioElement.play();
+
+            audioSource = audioContext.createMediaElementSource(audioElement);
+            lowpassFilter = audioContext.createBiquadFilter();
+            lowpassFilter.type = 'lowpass';
+            lowpassFilter.frequency.setValueAtTime(20000, audioContext.currentTime);
+
+            audioSource.connect(lowpassFilter).connect(audioContext.destination);
+        }
+
+        function applyLowpassFilter() {
+            lowpassFilter.frequency.setValueAtTime(500, audioContext.currentTime);
+        }
+
+        function removeLowpassFilter() {
+            lowpassFilter.frequency.setValueAtTime(20000, audioContext.currentTime);
+        }
+
+        function splitSection(section) {
+            if (isPaused || document.body.classList.contains('disabled-click')) return;
+
+            clickCount++;
+
+            if (clickCount > 25) {
+                isPaused = true;
+                pauseFunctionality();
+                return;
+            }
+
+            const rect = section.getBoundingClientRect();
+            const splitChoice = Math.random() < 0.5 ? 2 : 4;
+
+            if (splitChoice === 2) {
+                const width = rect.width / 2;
+                const height = rect.height;
+
+                for (let i = 0; i < 2; i++) {
+                    createSection(rect.left + i * width, rect.top, width, height);
+                }
+            } else {
+                const width = rect.width / 2;
+                const height = rect.height / 2;
+
+                for (let i = 0; i < 4; i++) {
+                    createSection(rect.left + (i % 2) * width, rect.top + Math.floor(i / 2) * height, width, height);
+                }
+            }
+
+            section.remove();
+            totalSections += splitChoice;
+        }
+
+        function createSection(left, top, width, height) {
+            const newSection = document.createElement('div');
+            newSection.className = 'section';
+            newSection.style.width = `${width}px`;
+            newSection.style.height = `${height}px`;
+            newSection.style.left = `${left}px`;
+            newSection.style.top = `${top}px`;
+            newSection.style.background = randomGradient();
+            newSection.onclick = () => splitSection(newSection);
+            document.body.appendChild(newSection);
+        }
+
+        function pauseFunctionality() {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('blurred');
+                section.onclick = null;
+            });
+            applyLowpassFilter();
+
+            setTimeout(() => showText('Hello.', () => {
+                setTimeout(() => {
+                    showText('Can you help me?');
+                    setTimeout(() => showButton('Click me when you\'re done.', handleMainButtonClick), 10000);
+                    enableClicking();
+                }, 3000);
+            }), 5000);
+        }
+
+        function showText(text, callback) {
+            if (currentTextBox) currentTextBox.remove();
+            currentTextBox = document.createElement('div');
+            currentTextBox.className = 'text-box';
+            document.body.appendChild(currentTextBox);
+
+            let index = 0;
+            currentTextBox.classList.add('text-visible');
+
+            const interval = setInterval(() => {
+                currentTextBox.textContent = text.slice(0, index + 1);
+                index++;
+                if (index === text.length) {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+            }, 100);
+        }
+
+        function showButton(buttonText, onClickCallback) {
+            const buttonBox = document.createElement('div');
+            buttonBox.className = 'button-box';
+            buttonBox.innerHTML = `<button>${buttonText}</button>`;
+            document.body.appendChild(buttonBox);
+            buttonBox.querySelector('button').onclick = onClickCallback;
+            buttonBox.style.display = 'block';
+        }
+
+        function handleMainButtonClick() {
+            window.location.href = 'congratulations.html';
+        }
+
+        function showChoices() {
+            const yesButtonBox = document.createElement('div');
+            yesButtonBox.className = 'button-box';
+            yesButtonBox.innerHTML = '<button>Yes</button> <button>No</button>';
+            document.body.appendChild(yesButtonBox);
+            const [yesButton, noButton] = yesButtonBox.querySelectorAll('button');
+            yesButton.onclick = resetPage;
+            noButton.onclick = handleNoClick;
+        }
+
+        function resetPage() {
+            location.reload();
+        }
+
+        function handleNoClick() {
+            showText('Why?');
+            document.querySelector('.button-box').remove();
+            setTimeout(() => showButton('I\'ve gone on long enough.', () => { }), 1000);
+            setTimeout(() => showButton('I deserve to be recognized for my work.', () => { }), 1500);
+        }
+
+        function enableClicking() {
+            removeLowpassFilter();
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('blurred');
+                section.onclick = () => turnSectionBlack(section);
+            });
+        }
+
+        function turnSectionBlack(section) {
+            if (section.style.background !== 'black') {
+                section.style.background = 'black';
+                blackSections++;
+            }
+            section.onclick = null;
+
+            if (blackSections === totalSections) {
+                showText('Congratulations.');
+                disableAllClicks();
+            }
+        }
+
+        function disableAllClicks() {
+            document.body.classList.add('disabled-click');
+        }
+
+        window.onload = function () {
+            setupAudio();
+
+            const initialSection = document.createElement('div');
+            initialSection.className = 'section';
+            initialSection.style.background = randomGradient();
+            initialSection.onclick = () => splitSection(initialSection);
+            document.body.appendChild(initialSection);
+        };
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>

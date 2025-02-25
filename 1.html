@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>.</title>
+    <!-- p5.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <!-- p5.sound library for audio -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/addons/p5.sound.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        let buildings = [];
+        let trees = [];
+        let people = [];
+        let animals = [];
+        let time = 0;
+        let song;
+
+        // Preload the audio file so it's ready by setup
+        function preload() {
+            // Ensure song1.mp3 is in the same folder as this HTML file
+            song = loadSound('song1.mp3');
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+            noStroke();
+
+            // Autoplay song (some browsers may require interaction before playing)
+            song.loop();
+
+            // Redirect after 5 seconds
+            setTimeout(() => {
+                window.location.href = "2.html";
+            }, 5000);
+
+            // Position the camera so we see the scene from the start
+            camera(0, -300, 600, 0, 0, 0, 0, 1, 0);
+
+            // Create buildings
+            for (let i = 0; i < 20; i++) {
+                buildings.push(new Building(
+                    random(-width / 2, width / 2),
+                    random(-height / 2, height / 2),
+                    random(100, 300)
+                ));
+            }
+
+            // Create trees
+            for (let i = 0; i < 50; i++) {
+                trees.push(new Tree(
+                    random(-width / 2, width / 2),
+                    random(-height / 2, height / 2),
+                    random(50, 100)
+                ));
+            }
+
+            // Create people
+            for (let i = 0; i < 30; i++) {
+                people.push(new Person(
+                    random(-width / 2, width / 2),
+                    random(-height / 2, height / 2)
+                ));
+            }
+
+            // Create animals
+            for (let i = 0; i < 20; i++) {
+                animals.push(new Animal(
+                    random(-width / 2, width / 2),
+                    random(-height / 2, height / 2)
+                ));
+            }
+        }
+
+        function draw() {
+            background(0);
+
+            // Allow mouse drag to orbit and scroll to zoom
+            orbitControl();
+
+            // Ambient light so everything isn't black
+            ambientLight(60);
+
+            // A point light that moves like a sun
+            let sunX = map(sin(time), -1, 1, -width / 2, width / 2);
+            let sunY = map(cos(time), -1, 1, -height / 2, height / 2);
+            pointLight(255, 255, 200, sunX, sunY, 500);
+
+            // Draw buildings
+            for (let building of buildings) {
+                building.display();
+            }
+
+            // Draw trees
+            for (let tree of trees) {
+                tree.display();
+            }
+
+            // Update and draw people
+            for (let person of people) {
+                person.update();
+                person.display();
+            }
+
+            // Update and draw animals
+            for (let animal of animals) {
+                animal.update();
+                animal.display();
+            }
+
+            // Time progresses for the "sun" movement
+            time += 0.01;
+        }
+
+        class Building {
+            constructor(x, y, h) {
+                this.pos = createVector(x, y);
+                this.h = h;
+                this.color = color(
+                    random(100, 200),
+                    random(100, 200),
+                    random(200, 255)
+                );
+            }
+            display() {
+                push();
+                translate(this.pos.x, this.pos.y, -this.h / 2);
+                fill(this.color);
+                box(50, 50, this.h);
+                pop();
+            }
+        }
+
+        class Tree {
+            constructor(x, y, h) {
+                this.pos = createVector(x, y);
+                this.h = h;
+                this.color = color(34, 139, 34);
+            }
+            display() {
+                push();
+                translate(this.pos.x, this.pos.y, -this.h / 2);
+                fill(this.color);
+                // trunk
+                cylinder(10, this.h);
+                // leaves
+                translate(0, 0, this.h / 2);
+                fill(50, 205, 50);
+                sphere(20);
+                pop();
+            }
+        }
+
+        class Person {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                this.vel = createVector(random(-1, 1), random(-1, 1));
+                this.color = color(random(255), random(255), random(255));
+            }
+            update() {
+                this.pos.add(this.vel);
+                // Reverse velocity if going out of bounds
+                if (this.pos.x < -width / 2 || this.pos.x > width / 2) this.vel.x *= -1;
+                if (this.pos.y < -height / 2 || this.pos.y > height / 2) this.vel.y *= -1;
+            }
+            display() {
+                push();
+                translate(this.pos.x, this.pos.y, 0);
+                fill(this.color);
+                box(10, 10, 30);  // Body
+                translate(0, 0, 20);
+                sphere(5);        // Head
+                pop();
+            }
+        }
+
+        class Animal {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                this.vel = createVector(random(-2, 2), random(-2, 2));
+                this.color = color(random(255), random(255), random(255));
+            }
+            update() {
+                this.pos.add(this.vel);
+                // Reverse velocity if out of bounds
+                if (this.pos.x < -width / 2 || this.pos.x > width / 2) this.vel.x *= -1;
+                if (this.pos.y < -height / 2 || this.pos.y > height / 2) this.vel.y *= -1;
+            }
+            display() {
+                push();
+                translate(this.pos.x, this.pos.y, 0);
+                fill(this.color);
+                box(15, 15, 20);  // Body
+                translate(0, 0, 15);
+                sphere(8);        // Head
+                pop();
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>
