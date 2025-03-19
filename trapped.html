@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            font-family: "Courier New", Courier, monospace;
+            color: lightgray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .login-container {
+            text-align: left;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .prompt {
+            font-size: 1.5rem;
+        }
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        .input-line span {
+            margin-right: 10px;
+        }
+        input {
+            background: transparent;
+            border: none;
+            color: lightgray;
+            font-size: 1.5rem;
+            font-family: inherit;
+            outline: none;
+            caret-color: lightgray;
+        }
+        #passwordInput {
+            -webkit-text-security: disc;
+        }
+        .enter-link {
+            display: none;
+            font-size: 1.5rem;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .error-message {
+            font-size: 1rem;
+            color: red;
+            margin-top: 10px;
+        }
+        .forever-link {
+            display: none;
+            font-size: 1rem;
+            text-decoration: underline;
+            cursor: pointer;
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <p class="title">login</p>
+        <p class="prompt">Username:</p>
+        <div class="input-line">
+            <span>&gt;_</span>
+            <input type="text" id="usernameInput" autofocus>
+        </div>
+        <p class="prompt">Password:</p>
+        <div class="input-line">
+            <span>&gt;_</span>
+            <input type="password" id="passwordInput">
+        </div>
+        <p class="error-message" id="errorMessage"></p>
+        <p class="forever-link" id="foreverLink" onclick="endRedirect()">You will rot here, <span style="text-decoration: underline;">forever.</span></p>
+    </div>
+    <script>
+        let failedAttempts = 0;
+
+        document.getElementById("passwordInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                handleLoginAttempt();
+            }
+        });
+
+        function handleLoginAttempt() {
+            failedAttempts++;
+            const errorMessage = document.getElementById("errorMessage");
+            const foreverLink = document.getElementById("foreverLink");
+
+            if (failedAttempts >= 4) {
+                errorMessage.style.display = "none";
+                foreverLink.style.display = "block";
+            } else if (failedAttempts === 3) {
+                errorMessage.textContent = "You can never get back to where you once were. Your account is gone.";
+            } else {
+                errorMessage.textContent = "Invalid login attempt.";
+            }
+        }
+        
+        function endRedirect() {
+            window.location.href = "end.html";
+        }
+    </script>
+</body>
+</html>

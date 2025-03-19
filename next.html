@@ -161,10 +161,10 @@
             });
             applyLowpassFilter();
 
-            setTimeout(() => showText('Hello.', () => {
+            setTimeout(() => showText('Welcome.', () => {
                 setTimeout(() => {
-                    showText('Can you help me?');
-                    setTimeout(() => showButton('Click me when you\'re done.', handleMainButtonClick), 10000);
+                    showText('If you can help me out of here, I\'ll give you what you want.');
+                    setTimeout(() => showButton('Click this button when you\'re done.', handleMainButtonClick), 10000);
                     enableClicking();
                 }, 3000);
             }), 5000);

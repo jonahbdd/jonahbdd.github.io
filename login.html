@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            font-family: "Courier New", Courier, monospace;
+            color: lightgray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .login-container {
+            text-align: left;
+        }
+        .title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .prompt {
+            font-size: 1.5rem;
+        }
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        .input-line span {
+            margin-right: 10px;
+        }
+        input {
+            background: transparent;
+            border: none;
+            color: lightgray;
+            font-size: 1.5rem;
+            font-family: inherit;
+            outline: none;
+            caret-color: lightgray;
+        }
+        #passwordInput {
+            -webkit-text-security: disc;
+        }
+        .message {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            opacity: 0;
+            white-space: pre-wrap;
+        }
+        .message2 {
+            position: absolute;
+            top: 75px;
+            left: 39%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            opacity: 0;
+            white-space: pre-wrap;
+        }
+        .enter-link {
+            display: none;
+            font-size: 1.5rem;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <p class="message" id="message"></p>
+    <p class="message2" id="message2"></p>
+    <div class="login-container">
+        <p class="title">login</p>
+        <p class="prompt">Username:</p>
+        <div class="input-line">
+            <span>&gt;_</span>
+            <input type="text" id="usernameInput" autofocus>
+        </div>
+        <p class="prompt">Password:</p>
+        <div class="input-line">
+            <span>&gt;_</span>
+            <input type="password" id="passwordInput">
+        </div>
+        <p class="enter-link" id="enterLink" onclick="redirect()">enter</p>
+    </div>
+    <script>
+        function typeText(element, text, speed) {
+            let index = 0;
+            const timer = setInterval(() => {
+                element.textContent += text[index];
+                index++;
+                if (index === text.length) {
+                    clearInterval(timer);
+                }
+            }, speed);
+        }
+        
+        setTimeout(() => {
+            const message = document.getElementById('message');
+            message.style.opacity = '1';
+            typeText(message, "just enter your credentials, this will all be over soon", 50);
+            
+            setTimeout(() => {
+                const message2 = document.getElementById('message2');
+                message2.style.opacity = '1';
+                typeText(message2, "i need your login info.", 125);
+            }, 7000);
+        }, 10000);
+        
+        document.getElementById("passwordInput").addEventListener("input", function() {
+            const username = document.getElementById("usernameInput").value;
+            const password = document.getElementById("passwordInput").value;
+            const enterLink = document.getElementById("enterLink");
+            if (username && password) {
+                enterLink.style.display = "block";
+            } else {
+                enterLink.style.display = "none";
+            }
+        });
+        
+        function redirect() {
+            window.location.href = "toolate.html";
+        }
+    </script>
+</body>
+</html>

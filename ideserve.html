@@ -49,11 +49,11 @@
     <script>
         let currentTextBox;
 
-        function setupAudio() {
-            const audioElement = new Audio('lit.mp3');
-            audioElement.loop = true;
-            audioElement.play();
-        }
+        // function setupAudio() {
+        //     const audioElement = new Audio('lit.mp3');
+        //     audioElement.loop = true;
+        //     audioElement.play();
+        // }
 
         function showText(text, callback) {
             if (currentTextBox) currentTextBox.remove();
@@ -84,7 +84,7 @@
 
         window.onload = function () {
             document.body.style.background = 'black';
-            setupAudio();
+            // setupAudio();
             showInitialText();
         };
     </script>
